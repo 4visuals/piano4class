@@ -1,0 +1,149 @@
+번역된 내용 Streamlit 애플리케이션에 실시간 사운드 재생을 포함하려면 웹 기반
+오디오 재생을 활용해야 합니다. Streamlit 앱에 HTML과 JavaScript를 삽입하면 이를
+달성할 수 있습니다. st.comComponents.v1.html을 사용하여 Streamlit 앱에 직접
+사용자 정의 HTML 및 JavaScript를 포함할 수 있습니다. 다음은 JavaScript의 Web
+Audio API를 사용하여 실시간 사운드 재생을 포함하는 업데이트된 코드 버전입니다.
+python Copy code import streamlit as st # Streamlit layout similar to the HTML
+structure st.title('컬러 피아노 앱') song_input = st.text_input('노래의 계이름을
+입력하세요 (예: 도레미파솔라시도):') play_button = st.button('연주 시작')
+save_button = st.button('노래 저장') song_title_input = st.text_input('노래
+제목을 입력하세요:') song_list = st.selectbox('저장된 노래 선택:',
+options=['저장된 노래 선택']) # Simulate saved songs with a simple dictionary
+stored in session stateif 'saved_songs' not in st.session_state:
+st.session_state.saved_songs = {} # Update song listif save_button: if
+song_title_input and song_input: st.session_state.saved_songs[song_title_input]
+= song_input st.success('노래가 성공적으로 저장되었습니다!') else:
+st.warning('노래 제목과 계이름을 모두 입력해주세요.') # Display saved songs in
+the dropdownif st.session_state.saved_songs: song_list = st.selectbox('저장된
+노래 선택:', options=['저장된 노래 선택'] +
+list(st.session_state.saved_songs.keys())) # Function to simulate playing a
+notedef play_note(note): st.write(f"Playing note: {note}") # Generate the HTML
+for the piano keys and add JavaScript for sound playback html_code = '''
+<div id="piano">
+  <button class="white-key" data-note="C4" style="background-color: #ff0000">
+    도
+  </button>
+  <button class="black-key" data-note="C#4" style="left: 45px">도#</button>
+  <button class="white-key" data-note="D4" style="background-color: #ffa500">
+    레
+  </button>
+  <button class="black-key" data-note="D#4" style="left: 107px">레#</button>
+  <button class="white-key" data-note="E4" style="background-color: #ffff00">
+    미
+  </button>
+  <button class="white-key" data-note="F4" style="background-color: #008000">
+    파
+  </button>
+  <button class="black-key" data-note="F#4" style="left: 231px">파#</button>
+  <button class="white-key" data-note="G4" style="background-color: #87ceeb">
+    솔
+  </button>
+  <button class="black-key" data-note="G#4" style="left: 293px">솔#</button>
+  <button class="white-key" data-note="A4" style="background-color: #000080">
+    라
+  </button>
+  <button class="black-key" data-note="A#4" style="left: 355px">라#</button>
+  <button class="white-key" data-note="B4" style="background-color: #8a2be2">
+    시
+  </button>
+  <button class="white-key" data-note="C5" style="background-color: #ff0000">
+    도
+  </button>
+</div>
+<script>
+  const notes = {
+    C4: "261.63",
+    "C#4": "277.18",
+    D4: "293.66",
+    "D#4": "311.13",
+    E4: "329.63",
+    F4: "349.23",
+    "F#4": "369.99",
+    G4: "392.00",
+    "G#4": "415.30",
+    A4: "440.00",
+    "A#4": "466.16",
+    B4: "493.88",
+    C5: "523.25",
+  };
+
+  document.querySelectorAll(".white-key, .black-key").forEach((key) => {
+    key.addEventListener("click", () => {
+      playSound(notes[key.getAttribute("data-note")]);
+    });
+  });
+
+  function playSound(frequency) {
+    const context = new (window.AudioContext || window.webkitAudioContext)();
+    const oscillator = context.createOscillator();
+    oscillator.type = "sine";
+    oscillator.frequency.setValueAtTime(frequency, context.currentTime);
+    oscillator.connect(context.destination);
+    oscillator.start();
+    oscillator.stop(context.currentTime + 0.5);
+  }
+</script>
+<style>
+  #piano {
+    display: flex;
+    background-color: #333;
+    padding: 20px;
+    border-radius: 10px;
+    position: relative;
+  }
+
+  .white-key {
+    width: 60px;
+    height: 200px;
+    margin: 0 2px;
+    border: none;
+    border-radius: 0 0 5px 5px;
+    font-size: 20px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 0.1s ease;
+    color: white;
+    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.7);
+    z-index: 1;
+    position: relative;
+  }
+
+  .black-key {
+    width: 40px;
+    height: 120px;
+    background-color: #000;
+    position: absolute;
+    top: 20px;
+    z-index: 2;
+    border: none;
+    border-radius: 0 0 5px 5px;
+    color: white;
+    font-size: 16px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 0.1s ease;
+  }
+
+  .white-key:active,
+  .black-key:active {
+    transform: scale(0.98);
+    box-shadow: 0 2px 2px rgba(0, 0, 0, 0.2);
+  }
+</style>
+''' # Embed the HTML code with sound playback in Streamlit
+st.components.v1.html(html_code, height=400) # Handle play button logicif
+play_button and song_input: st.write('Playing song...') for note in
+song_input.split(): play_note(note) # If a song is selected from the dropdown,
+populate the input fieldif song_list and song_list != '저장된 노래 선택':
+song_input = st.session_state.saved_songs[song_list] st.text_input('노래의
+계이름을 입력하세요 (예: 도레미파솔라시도):', value=song_input) 설명: HTML 및
+JavaScript 삽입: html_code 문자열에는 피아노 건반의 HTML 레이아웃과 Web Audio
+API를 사용하여 사운드 재생을 처리하는 JavaScript 코드가 포함되어 있습니다.
+playSound 함수는 AudioContext에 OscillatorNode를 생성하여 지정된 주파수로 톤을
+재생합니다. 사운드 재생: 피아노 건반을 클릭하면 해당 음표 주파수가 실시간으로
+재생됩니다. 유선형 구성요소: st.comComponents.v1.html은 Streamlit 앱에서 사용자
+정의 HTML 및 JavaScript를 렌더링하는 데 사용됩니다. 실시간 상호 작용: 사용자는
+Streamlit 앱에서 피아노 건반과 상호 작용하고 해당 사운드를 직접 들을 수
+있습니다. 배포: 다음 명령을 사용하여 Streamlit 앱을 실행합니다. bash Copy code
+streamlit run your_script.py 이 명령은 실시간 사운드 재생 기능이 있는 피아노
+앱을 사용할 수 있는 로컬 웹 서버를 시작합니다.
